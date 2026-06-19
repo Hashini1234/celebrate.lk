@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, register } = useAuth();
   const navigate = useNavigate();
+  const dashboardByRole = { admin: '/admin', vendor: '/vendor', customer: '/customer' };
 
   function update(event) {
     setForm({ ...form, [event.target.name]: event.target.value });
@@ -21,7 +22,7 @@ export default function LoginPage() {
     setError('');
     try {
       const user = mode === 'login' ? await login(form.email, form.password) : await register(form);
-      navigate(user.role === 'admin' ? '/admin' : '/customer');
+      navigate(dashboardByRole[user.role] || '/customer');
     } catch (err) {
       setError(err.response?.data?.message || 'Authentication failed');
     }

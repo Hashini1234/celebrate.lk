@@ -27,6 +27,7 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const [events, setEvents] = useState([]);
   const [vendors, setVendors] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [freeVendors, setFreeVendors] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [eventForm, setEventForm] = useState(emptyEvent);
@@ -44,10 +45,16 @@ export default function AdminDashboard() {
   }, []);
 
   async function loadData() {
-    const [eventsRes, vendorsRes, bookingsRes] = await Promise.all([api.get('/events'), api.get('/vendors'), api.get('/bookings')]);
+    const [eventsRes, vendorsRes, bookingsRes, applicationsRes] = await Promise.all([
+      api.get('/events'),
+      api.get('/vendors'),
+      api.get('/bookings'),
+      api.get('/vendor-applications')
+    ]);
     setEvents(eventsRes.data);
     setVendors(vendorsRes.data);
     setBookings(bookingsRes.data);
+    setApplications(applicationsRes.data);
   }
 
   async function addEvent(event) {
@@ -105,6 +112,12 @@ export default function AdminDashboard() {
     loadData();
   }
 
+  async function updateApplication(id, status) {
+    await api.patch(`/vendor-applications/${id}/status`, { status });
+    setMessage(`Vendor application ${status}.`);
+    loadData();
+  }
+
   return (
     <main className="dashboard admin-dashboard">
       <section className="dash-hero admin">
@@ -149,6 +162,32 @@ export default function AdminDashboard() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="panel wide">
+        <h2><Store /> Vendor Applications</h2>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Business</th><th>Owner</th><th>Category</th><th>District</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              {applications.map((application) => (
+                <tr key={application._id}>
+                  <td>{application.businessName}<small>{application.email}</small></td>
+                  <td>{application.ownerName}<small>{application.phone}</small></td>
+                  <td>{application.vendorCategory}</td>
+                  <td>{application.district}</td>
+                  <td><StatusBadge status={application.status} /></td>
+                  <td className="action-row">
+                    <button disabled={application.status === 'approved'} onClick={() => updateApplication(application._id, 'approved')} type="button"><CheckCircle2 size={16} /> Approve</button>
+                    <button disabled={application.status === 'rejected'} onClick={() => updateApplication(application._id, 'rejected')} type="button"><XCircle size={16} /> Reject</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <div className="dashboard-grid">

@@ -10,6 +10,8 @@ import bookingRoutes from './routes/bookingRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import feedbackRoutes from './routes/feedbackRoutes.js';
 import vendorRoutes from './routes/vendorRoutes.js';
+import vendorApplicationRoutes from './routes/vendorApplicationRoutes.js';
+import vendorPortalRoutes from './routes/vendorPortalRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +41,8 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/vendors', vendorRoutes);
+app.use('/api/vendor-applications', vendorApplicationRoutes);
+app.use('/api/vendor-portal', vendorPortalRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/feedback', feedbackRoutes);
 

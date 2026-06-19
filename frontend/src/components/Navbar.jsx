@@ -7,7 +7,7 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isPortal = location.pathname === '/customer' || location.pathname === '/admin';
+  const isPortal = location.pathname === '/customer' || location.pathname === '/admin' || location.pathname === '/vendor';
 
   function handleLogout() {
     logout();
@@ -32,6 +32,7 @@ export default function Navbar() {
           <>
             <a href="/#services">Services</a>
             <a href="/#feedback">Feedback</a>
+            <NavLink to="/partner">Become a Partner</NavLink>
           </>
         )}
         {user && (

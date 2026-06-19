@@ -6,6 +6,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import CustomerDashboard from './pages/CustomerDashboard';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import PartnerApplyPage from './pages/PartnerApplyPage';
+import VendorDashboard from './pages/VendorDashboard';
 
 export default function App() {
   return (
@@ -14,6 +16,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/partner" element={<PartnerApplyPage />} />
         <Route
           path="/customer"
           element={
@@ -27,6 +30,14 @@ export default function App() {
           element={
             <ProtectedRoute role="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendor"
+          element={
+            <ProtectedRoute role="vendor">
+              <VendorDashboard />
             </ProtectedRoute>
           }
         />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, BadgeCheck, CalendarCheck, CreditCard, Headphones, ShieldCheck, Star, Users } from 'lucide-react';
+import { ArrowRight, BadgeCheck, BriefcaseBusiness, CalendarCheck, CreditCard, Headphones, ShieldCheck, Star, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import api from '../api/client';
@@ -75,6 +75,21 @@ export default function LandingPage() {
             <span>Pay</span>
           </div>
         </div>
+      </section>
+
+      <section className="partner-network">
+        <div>
+          <span>Partner Network</span>
+          <h2>Become a Verified Celebrate.lk Partner Vendor</h2>
+          <p>Receive customer bookings, increase business visibility, earn a verified partner badge, manage bookings online and showcase your portfolio.</p>
+        </div>
+        <div className="partner-network-benefits">
+          <span><BriefcaseBusiness /> Receive customer bookings</span>
+          <span><BadgeCheck /> Verified Partner Badge</span>
+          <span><CalendarCheck /> Manage bookings online</span>
+          <span><Star /> Showcase portfolio</span>
+        </div>
+        <Link className="purple-cta" to="/partner">Join CelebrateLK Partner Network <ArrowRight size={18} /></Link>
       </section>
 
       <section id="feedback" className="section tinted">
