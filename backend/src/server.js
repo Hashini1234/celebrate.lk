@@ -20,11 +20,12 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173,http://
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const localhostPattern = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
 
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      if (!origin || allowedOrigins.includes(origin) || localhostPattern.test(origin)) return callback(null, true);
       return callback(new Error(`CORS blocked origin: ${origin}`));
     },
     credentials: true
