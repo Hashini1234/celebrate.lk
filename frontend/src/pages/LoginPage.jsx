@@ -76,7 +76,7 @@ export default function LoginPage() {
             {mode === 'login' ? 'Sign Up' : 'Login'}
           </button>
         </p>
-        <small className="demo-note">Demo: admin@everlorg.com / admin123 or customer@everlorg.com / customer123 after seed.</small>
+        <small className="demo-note">Demo after seed: admin@everlorg.com / admin123, customer@everlorg.com / customer123, vendor@celebrate.lk / vendor123.</small>
       </form>
       <div className="auth-side right" />
     </main>

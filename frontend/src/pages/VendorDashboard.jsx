@@ -5,6 +5,11 @@ import { useAuth } from '../context/AuthContext';
 
 const emptyService = { title: '', category: 'Photography', description: '', price: '', coverImage: '' };
 
+function imageUrl(value) {
+  if (!value) return '';
+  return value.startsWith('http') ? value : `${uploadsBaseUrl}${value}`;
+}
+
 export default function VendorDashboard() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
@@ -107,7 +112,7 @@ export default function VendorDashboard() {
           <input type="file" accept="image/*" multiple onChange={(e) => setPortfolioFiles([...e.target.files])} />
           <button className="primary-button" type="submit">Upload Portfolio</button>
           <div className="portfolio-grid">
-            {data.vendor.portfolioImages?.map((image) => <img key={image} src={`${uploadsBaseUrl}${image}`} alt="Vendor portfolio" />)}
+            {data.vendor.portfolioImages?.map((image) => <img key={image} src={imageUrl(image)} alt="Vendor portfolio" />)}
           </div>
         </form>
       </div>
