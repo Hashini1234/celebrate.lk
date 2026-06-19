@@ -9,6 +9,8 @@ export default function Navbar() {
   const location = useLocation();
   const isPortal = location.pathname === '/customer' || location.pathname === '/admin' || location.pathname === '/vendor';
 
+  if (location.pathname === '/admin') return null;
+
   function handleLogout() {
     logout();
     navigate('/');
