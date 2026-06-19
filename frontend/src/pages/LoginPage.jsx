@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { login, register } = useAuth();
   const navigate = useNavigate();
 
@@ -47,7 +48,25 @@ export default function LoginPage() {
         <label>Email Address</label>
         <div className="input-wrap"><Mail size={20} /><input type="email" name="email" value={form.email} onChange={update} required placeholder="Enter your email" /></div>
         <label>Password</label>
-        <div className="input-wrap"><Lock size={20} /><input type="password" name="password" value={form.password} onChange={update} required placeholder="Enter your password" /><Eye size={20} /></div>
+        <div className="input-wrap">
+          <Lock size={20} />
+          <input
+            type={showPassword ? 'text' : 'password'}
+            name="password"
+            value={form.password}
+            onChange={update}
+            required
+            placeholder="Enter your password"
+          />
+          <button
+            className="password-toggle"
+            type="button"
+            onClick={() => setShowPassword((current) => !current)}
+            title={showPassword ? 'Hide password' : 'Show password'}
+          >
+            <Eye size={20} />
+          </button>
+        </div>
         {error && <div className="error-box">{error}</div>}
         <button className="purple-button" type="submit"><LogIn size={22} /> {mode === 'login' ? 'Login' : 'Sign Up'}</button>
         <p className="switch-auth">
