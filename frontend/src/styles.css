@@ -1263,6 +1263,169 @@ button {
   padding-left: 18px;
 }
 
+/* Final admin dashboard visual pass: screenshot-matched spacing and hierarchy only. */
+.admin-console {
+  background: #fffdf8;
+  grid-template-columns: 292px minmax(0, 1fr);
+}
+
+.admin-sidebar {
+  background: linear-gradient(180deg, #fff, #fffdf8);
+  padding: 28px 24px;
+}
+
+.admin-side-brand strong {
+  font-size: 35px;
+}
+
+.admin-sidebar nav a {
+  min-height: 50px;
+  padding: 0 16px;
+}
+
+.admin-premium-card {
+  padding: 26px 22px;
+}
+
+.admin-main {
+  display: flex;
+  flex-direction: column;
+  padding: 0 28px 30px;
+}
+
+.admin-topbar {
+  min-height: 82px;
+}
+
+.admin-search {
+  max-width: 350px;
+}
+
+.admin-welcome {
+  margin-top: 20px;
+  min-height: 178px;
+  padding: 32px 44px;
+}
+
+.admin-welcome h1 {
+  font-size: clamp(36px, 3.3vw, 48px);
+}
+
+.admin-stat-grid {
+  margin-top: 16px;
+}
+
+.admin-stat-grid article {
+  min-height: 128px;
+  padding: 24px 26px;
+}
+
+.admin-two-col {
+  margin-top: 16px;
+}
+
+.admin-card {
+  padding: 24px 26px;
+}
+
+.admin-card-title {
+  margin-bottom: 16px;
+}
+
+.admin-feature-request {
+  min-height: 92px;
+  padding-left: 16px;
+}
+
+.admin-quick-actions {
+  gap: 14px;
+}
+
+.admin-quick-actions a {
+  min-height: 128px;
+}
+
+.admin-table-wrap th,
+.admin-table-wrap td {
+  padding: 16px 14px;
+}
+
+.admin-action-cell button {
+  min-width: 86px;
+  padding: 0 14px;
+}
+
+.admin-bottom-grid {
+  margin: 16px 0 28px;
+}
+
+.admin-main > .success-box {
+  order: 1;
+}
+
+.admin-welcome {
+  order: 2;
+}
+
+.admin-stat-grid {
+  order: 3;
+}
+
+.admin-main > .admin-two-col:not(.admin-forms-row) {
+  order: 4;
+}
+
+#bookings {
+  order: 5;
+}
+
+.admin-bottom-grid {
+  order: 6;
+}
+
+.admin-forms-row {
+  order: 7;
+}
+
+#applications {
+  order: 8;
+}
+
+#assign {
+  order: 9;
+}
+
+.admin-card,
+.admin-stat-grid article,
+.admin-welcome {
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.admin-card:hover,
+.admin-stat-grid article:hover {
+  box-shadow: 0 18px 44px rgba(58, 45, 19, 0.09);
+  transform: translateY(-1px);
+}
+
+.admin-table-wrap tbody tr {
+  transition: background 160ms ease;
+}
+
+.admin-table-wrap tbody tr:hover {
+  background: #fffaf0;
+}
+
+.admin-console .status-badge.pending {
+  background: #fff4d8;
+  color: #b07800;
+}
+
+.admin-console .status-badge.approved,
+.admin-console .status-badge.completed {
+  background: #eaf8ee;
+  color: #218045;
+}
+
 .dash-hero.vendor {
   background: linear-gradient(135deg, #fff, #f2fff7);
 }
