@@ -54,11 +54,6 @@ button {
   font-weight: 800;
 }
 
-.brand span::after {
-  color: #f7c84f;
-  content: "LK";
-}
-
 .brand small {
   font-family: Inter, sans-serif;
   font-size: 13px;

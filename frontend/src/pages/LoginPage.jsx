@@ -31,7 +31,7 @@ export default function LoginPage() {
     <main className="auth-page">
       <div className="auth-side left" />
       <form className="auth-card" onSubmit={submit}>
-        <Link to="/" className="auth-logo">Everlorg</Link>
+        <Link to="/" className="auth-logo">Celebrate.lk</Link>
         <span className="tagline">LIFE IS AN EVENT. MAKE IT MEMORABLE.</span>
         <h1>{mode === 'login' ? 'Welcome Back!' : 'Create Account'}</h1>
         <p>{mode === 'login' ? 'Login to continue planning your perfect event.' : 'Sign up as a customer and book your first event.'}</p>

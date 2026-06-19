@@ -17,7 +17,7 @@ export default function Navbar() {
   return (
     <header className={`site-header ${isPortal ? 'portal-header' : ''}`}>
       <Link className="brand" to="/">
-        <span>Everlorg</span>
+        <span>Celebrate.lk</span>
         <small>Plan. Celebrate. Cherish.</small>
       </Link>
       <nav className="nav-links">

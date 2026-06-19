@@ -67,7 +67,7 @@ export default function LandingPage() {
         <div>
           <span>About us</span>
           <h2>One platform for customers, admins and vendors</h2>
-          <p>Everlorg keeps customer booking requests, vendor availability, approval notifications and bank slip payment records organized in a single MERN stack system.</p>
+          <p>Celebrate.lk keeps customer booking requests, vendor availability, approval notifications and bank slip payment records organized in a single MERN stack system.</p>
           <div className="process-row">
             <span>Book</span>
             <span>Assign</span>
