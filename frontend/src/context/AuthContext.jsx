@@ -8,11 +8,14 @@ export function AuthProvider({ children }) {
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => Boolean(localStorage.getItem('token')));
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     api

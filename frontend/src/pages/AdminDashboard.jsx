@@ -80,22 +80,30 @@ export default function AdminDashboard() {
 
   async function addEvent(event) {
     event.preventDefault();
-    await api.post('/events', {
-      ...eventForm,
-      basePrice: Number(eventForm.basePrice),
-      inclusions: eventForm.inclusions.split(',').map((item) => item.trim()).filter(Boolean)
-    });
-    setMessage('Event package added.');
-    setEventForm(emptyEvent);
-    loadData();
+    try {
+      await api.post('/events', {
+        ...eventForm,
+        basePrice: Number(eventForm.basePrice),
+        inclusions: eventForm.inclusions.split(',').map((item) => item.trim()).filter(Boolean)
+      });
+      setMessage('Event package added.');
+      setEventForm(emptyEvent);
+      loadData();
+    } catch (err) {
+      setMessage(err.response?.status === 403 ? 'Only an admin account can add events. Please logout and login as admin.' : err.response?.data?.message || 'Could not add event.');
+    }
   }
 
   async function addVendor(event) {
     event.preventDefault();
-    await api.post('/vendors', { ...vendorForm, pricePerEvent: Number(vendorForm.pricePerEvent) });
-    setMessage('Vendor added.');
-    setVendorForm(emptyVendor);
-    loadData();
+    try {
+      await api.post('/vendors', { ...vendorForm, pricePerEvent: Number(vendorForm.pricePerEvent) });
+      setMessage('Vendor added.');
+      setVendorForm(emptyVendor);
+      loadData();
+    } catch (err) {
+      setMessage(err.response?.status === 403 ? 'Only an admin account can add vendors. Please logout and login as admin.' : err.response?.data?.message || 'Could not add vendor.');
+    }
   }
 
   async function checkFreeVendors(targetBooking = booking) {
