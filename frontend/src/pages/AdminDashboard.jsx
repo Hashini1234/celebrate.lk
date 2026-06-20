@@ -55,11 +55,20 @@ export default function AdminDashboard() {
   const [vendorForm, setVendorForm] = useState(emptyVendor);
   const [selectedBooking, setSelectedBooking] = useState('');
   const [selectedVendors, setSelectedVendors] = useState([]);
-  const [estimatedTotal, setEstimatedTotal] = useState('');
+  const [vendorCategory, setVendorCategory] = useState('Photography');
+  const [eventBudget, setEventBudget] = useState('');
   const [message, setMessage] = useState('');
 
   const booking = useMemo(() => bookings.find((item) => item._id === selectedBooking), [bookings, selectedBooking]);
   const pendingBookings = useMemo(() => bookings.filter((item) => item.status === 'pending' || item.status === 'vendor_assigned'), [bookings]);
+  const selectedVendorTotal = useMemo(
+    () =>
+      freeVendors
+        .filter((vendor) => selectedVendors.includes(vendor._id))
+        .reduce((sum, vendor) => sum + Number(vendor.pricePerEvent || 0), 0),
+    [freeVendors, selectedVendors]
+  );
+  const remainingBudget = Number(eventBudget || booking?.estimatedTotal || 0) - selectedVendorTotal;
 
   useEffect(() => {
     loadData();
@@ -106,9 +115,17 @@ export default function AdminDashboard() {
     }
   }
 
+  function handleBookingSelect(id) {
+    const selected = bookings.find((item) => item._id === id);
+    setSelectedBooking(id);
+    setSelectedVendors([]);
+    setFreeVendors([]);
+    setEventBudget(selected?.estimatedTotal || '');
+  }
+
   async function checkFreeVendors(targetBooking = booking) {
     if (!targetBooking) return;
-    const { data } = await api.get(`/vendors?date=${targetBooking.eventDate}`);
+    const { data } = await api.get(`/vendors?date=${targetBooking.eventDate}&serviceType=${vendorCategory}`);
     setFreeVendors(data);
     setMessage('Available vendors loaded for the selected event date.');
   }
@@ -117,12 +134,12 @@ export default function AdminDashboard() {
     event.preventDefault();
     await api.patch(`/bookings/${selectedBooking}/vendors`, {
       vendorIds: selectedVendors,
-      estimatedTotal: Number(estimatedTotal || booking.estimatedTotal),
+      estimatedTotal: Number(eventBudget || booking.estimatedTotal),
       adminMessage: 'Vendors assigned. Please wait for final approval.'
     });
     setMessage('Vendors assigned to booking.');
     setSelectedVendors([]);
-    setEstimatedTotal('');
+    setEventBudget('');
     await loadData();
   }
 
@@ -315,14 +332,31 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <form className="admin-card admin-form-card" id="assign" onSubmit={assignVendors}>
+        <form className="admin-card admin-form-card admin-assign-card" id="assign" onSubmit={assignVendors}>
           <h2><LinkIcon size={20} /> Assign Free Vendors</h2>
-          <select value={selectedBooking} onChange={(e) => setSelectedBooking(e.target.value)} required>
+          <select value={selectedBooking} onChange={(e) => handleBookingSelect(e.target.value)} required>
             <option value="">Select booking</option>
             {bookings.map((item) => <option key={item._id} value={item._id}>{item.customer?.name} - {item.eventService?.title}</option>)}
           </select>
+
+          {booking && (
+            <div className="assign-summary">
+              <div><span>Event</span><strong>{booking.eventService?.title}</strong></div>
+              <div><span>Event Date</span><strong>{new Date(booking.eventDate).toLocaleDateString()}</strong></div>
+              <div>
+                <span>Vendor Category</span>
+                <select value={vendorCategory} onChange={(e) => { setVendorCategory(e.target.value); setFreeVendors([]); setSelectedVendors([]); }}>
+                  {['Venue', 'Catering', 'Photography', 'Decorations', 'Music', 'Transport', 'Other'].map((item) => <option key={item}>{item}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+
           <button type="button" onClick={() => checkFreeVendors()}>Check free vendors for date</button>
-          <div className="vendor-picker">
+
+          <div className="available-vendors">
+            <h3>Available Vendors</h3>
+            {freeVendors.length === 0 && <p className="muted">Select booking and category, then check free vendors.</p>}
             {freeVendors.map((vendor) => (
               <label key={vendor._id}>
                 <input
@@ -331,12 +365,27 @@ export default function AdminDashboard() {
                   onChange={(e) => setSelectedVendors(e.target.checked ? [...selectedVendors, vendor._id] : selectedVendors.filter((id) => id !== vendor._id))}
                 />
                 <span>{vendor.name}</span>
-                <small>{vendor.serviceType} | LKR {Number(vendor.pricePerEvent).toLocaleString()}</small>
+                <strong>⭐ {vendor.rating || 4.8}</strong>
+                <small>LKR {Number(vendor.pricePerEvent || 0).toLocaleString()}</small>
               </label>
             ))}
           </div>
-          <input placeholder={`Estimated total ${booking?.estimatedTotal ? `current LKR ${booking.estimatedTotal}` : ''}`} type="number" value={estimatedTotal} onChange={(e) => setEstimatedTotal(e.target.value)} />
-          <button type="submit">Save Vendor Booking</button>
+
+          <div className="assign-budget-grid">
+            <label>
+              <span>Event Budget</span>
+              <input type="number" value={eventBudget} onChange={(e) => setEventBudget(e.target.value)} placeholder="Event budget" />
+            </label>
+            <label>
+              <span>Current Cost</span>
+              <input type="number" value={selectedVendorTotal} readOnly />
+            </label>
+            <label>
+              <span>Remaining Budget</span>
+              <input type="number" value={remainingBudget} readOnly />
+            </label>
+          </div>
+          <button type="submit">Assign Vendor</button>
         </form>
 
         <div className="admin-bottom-grid">

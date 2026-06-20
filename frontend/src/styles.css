@@ -1173,6 +1173,91 @@ button {
   resize: vertical;
 }
 
+.admin-assign-card {
+  gap: 18px;
+}
+
+.assign-summary {
+  background: #fffaf0;
+  border: 1px solid #f1e2c5;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 16px;
+}
+
+.assign-summary div {
+  display: grid;
+  gap: 7px;
+}
+
+.assign-summary span,
+.assign-budget-grid span {
+  color: #6b6174;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.assign-summary strong {
+  font-size: 16px;
+}
+
+.available-vendors {
+  border: 1px solid #eee2cc;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.available-vendors h3 {
+  margin: 0;
+}
+
+.available-vendors label {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #f1e8d8;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto 1fr auto auto;
+  min-height: 54px;
+  padding: 10px 14px;
+}
+
+.available-vendors label:hover {
+  background: #fffaf0;
+}
+
+.available-vendors input {
+  width: auto;
+}
+
+.available-vendors small {
+  color: #6b6174;
+  font-weight: 850;
+}
+
+.assign-budget-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.assign-budget-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.assign-budget-grid input[readonly] {
+  background: #fffaf0;
+  color: #171333;
+  font-weight: 900;
+}
+
 .admin-bottom-grid {
   display: grid;
   gap: 20px;
