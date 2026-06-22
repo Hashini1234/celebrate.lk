@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronRight,
   CloudUpload,
+  CreditCard,
   Crown,
   Gift,
   Heart,
@@ -41,6 +42,7 @@ const steps = [
 function getBookingStep(booking) {
   if (!booking) return 0;
   if (booking.status === 'completed') return 3;
+  if (booking.paymentStatus === 'paid') return 3;
   if (booking.payments?.some((payment) => payment.status === 'verified')) return 3;
   if (booking.status === 'approved') return 2;
   if (booking.status === 'vendor_assigned') return 1;
@@ -56,6 +58,7 @@ export default function CustomerDashboard() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submittingBooking, setSubmittingBooking] = useState(false);
+  const [startingPayment, setStartingPayment] = useState(false);
   const [detailsEvent, setDetailsEvent] = useState(null);
   const bookingFormRef = useRef(null);
   const eventDateRef = useRef(null);
@@ -109,6 +112,37 @@ export default function CustomerDashboard() {
     setBookings(bookingsRes.data);
     setReviews(feedbackRes.data);
     setBookingForm((current) => ({ ...current, eventService: current.eventService || eventsRes.data[0]?._id || '' }));
+  }
+
+  function loadPayHereScript() {
+    if (window.payhere) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const existingScript = document.querySelector('script[src="https://www.payhere.lk/lib/payhere.js"]');
+      if (existingScript) {
+        existingScript.addEventListener('load', resolve, { once: true });
+        existingScript.addEventListener('error', reject, { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://www.payhere.lk/lib/payhere.js';
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('PayHere checkout could not be loaded.'));
+      document.body.appendChild(script);
+    });
+  }
+
+  function getBookingPayload() {
+    return {
+      eventService: bookingForm.eventService,
+      eventDate: bookingForm.eventDate,
+      startTime: bookingForm.startTime,
+      endTime: bookingForm.endTime,
+      guestCount: bookingForm.guestCount,
+      venueAddress: bookingForm.venueAddress,
+      notes: bookingForm.notes
+    };
   }
 
   function choosePackage(eventItem) {
@@ -171,6 +205,41 @@ export default function CustomerDashboard() {
       setError(err.response?.data?.message || 'Booking request failed. Please check the details and try again.');
     } finally {
       setSubmittingBooking(false);
+    }
+  }
+
+  async function startPayHerePayment() {
+    if (!bookingFormRef.current?.reportValidity()) return;
+    setStartingPayment(true);
+    setError('');
+    setMessage('');
+
+    try {
+      await loadPayHereScript();
+      const { data } = await api.post('/payment/create', getBookingPayload());
+
+      window.payhere.onCompleted = async function onCompleted(orderId) {
+        setMessage(`PayHere checkout completed for ${orderId}. Waiting for secure gateway verification.`);
+        await loadData();
+        setTimeout(() => document.getElementById('bookings')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+      };
+
+      window.payhere.onDismissed = function onDismissed() {
+        setMessage('Payment popup closed. Your booking is saved as pending payment.');
+        loadData();
+      };
+
+      window.payhere.onError = function onError(paymentError) {
+        setError(`PayHere payment failed to start: ${paymentError}`);
+        loadData();
+      };
+
+      window.payhere.startPayment(data.payment);
+      setMessage(`Secure payment started for ${data.booking.eventService?.title || 'your event'}.`);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Could not start PayHere payment.');
+    } finally {
+      setStartingPayment(false);
     }
   }
 
@@ -341,6 +410,9 @@ export default function CustomerDashboard() {
             <button className="gold-cta" disabled={submittingBooking} type="submit">
               {submittingBooking ? 'Sending Request...' : 'Confirm Booking'} <ShieldCheck size={18} />
             </button>
+            <button className="payhere-cta" disabled={startingPayment || submittingBooking} onClick={startPayHerePayment} type="button">
+              {startingPayment ? 'Starting PayHere...' : 'Pay Now with PayHere'} <CreditCard size={18} />
+            </button>
           </form>
         </div>
       </section>
@@ -364,6 +436,7 @@ export default function CustomerDashboard() {
               <div>
                 <strong>Rs. {Number(activeBooking.estimatedTotal).toLocaleString()}</strong>
                 <StatusBadge status={activeBooking.status} />
+                <StatusBadge status={activeBooking.paymentStatus || 'pending'} />
               </div>
             </article>
           ) : (
@@ -410,7 +483,16 @@ export default function CustomerDashboard() {
                   <td>{new Date(booking.eventDate).toLocaleDateString()}<small>{booking.startTime || '--:--'} - {booking.endTime || '--:--'}</small></td>
                   <td><StatusBadge status={booking.status} /></td>
                   <td>LKR {Number(booking.estimatedTotal).toLocaleString()}</td>
-                  <td>{booking.payments?.map((pay) => <a key={pay._id} href={`${uploadsBaseUrl}${pay.slipUrl}`} target="_blank">Slip</a>) || 'No slip'}</td>
+                  <td>
+                    {booking.paymentGateway === 'payhere' && <span>PayHere: {booking.paymentStatus}</span>}
+                    {booking.payments?.map((pay) =>
+                      pay.slipUrl ? (
+                        <a key={pay._id} href={`${uploadsBaseUrl}${pay.slipUrl}`} target="_blank">Slip</a>
+                      ) : (
+                        <span key={pay._id}>{pay.note || 'Online payment'}</span>
+                      )
+                    ) || 'No payment'}
+                  </td>
                   <td>{booking.assignedVendors?.map((vendor) => vendor.name).join(', ') || 'Pending'}</td>
                 </tr>
               ))}

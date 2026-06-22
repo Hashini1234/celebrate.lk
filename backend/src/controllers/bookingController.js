@@ -113,6 +113,9 @@ export async function verifyPayment(req, res) {
     payment.status = 'verified';
   });
   booking.status = 'completed';
+  booking.paymentStatus = 'paid';
+  booking.paymentGateway = 'manual';
+  booking.paidAt = booking.paidAt || new Date();
   booking.adminMessage = 'Payment verified. Your event is confirmed.';
   await booking.save();
 

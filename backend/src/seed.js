@@ -105,6 +105,9 @@ const booking = await Booking.create({
   venueAddress: 'Colombo 07',
   notes: 'Outdoor evening wedding preferred.',
   status: 'completed',
+  paymentStatus: 'paid',
+  paymentGateway: 'manual',
+  paidAt: new Date(),
   assignedVendors: [vendors[2]._id],
   estimatedTotal: 520000
 });

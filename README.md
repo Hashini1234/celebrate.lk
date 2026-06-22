@@ -29,6 +29,7 @@ Celebrate.lk is a MERN stack event planning and booking platform for customers, 
 - Customer dashboard for booking event packages, viewing booking status, uploading payment slips, and submitting feedback
 - Admin dashboard for event package CRUD, booking approval/rejection, vendor assignment, payment verification, and vendor application review
 - Vendor dashboard for managing services, portfolio images, and assigned booking responses
+- PayHere online checkout with server-side hash generation and notification verification
 - Vendor application uploads for portfolio images and business registration documents
 - MongoDB/Mongoose models for users, event services, bookings, vendors, vendor services, vendor applications, and feedback
 - Email notification hooks for booking and payment workflows
@@ -226,6 +227,18 @@ SMTP_PASS=your_smtp_password
 EMAIL_FROM="Celebrate.lk <no-reply@example.com>"
 ```
 
+PayHere online payment settings:
+
+```env
+PAYHERE_MERCHANT_ID=your_merchant_id
+PAYHERE_MERCHANT_SECRET=your_domain_merchant_secret
+PAYHERE_CURRENCY=LKR
+PAYHERE_SANDBOX=true
+PAYHERE_NOTIFY_URL=https://your-api-domain.com/api/payment/payhere/notify
+PAYHERE_RETURN_URL=http://localhost:5173/customer
+PAYHERE_CANCEL_URL=http://localhost:5173/customer
+```
+
 ### Frontend
 
 Create a `frontend/.env` file only if the API runs somewhere other than the default local backend:
@@ -253,6 +266,8 @@ VITE_UPLOADS_URL=http://localhost:5000
 | `PATCH /api/bookings/:id/vendors` | Admin | Assign vendors to a booking |
 | `PATCH /api/bookings/:id/status` | Admin | Approve, reject, or update booking status |
 | `PATCH /api/bookings/:id/payments/verify` | Admin | Verify a payment |
+| `POST /api/payment/create` | Customer | Create a pending booking and PayHere checkout payload |
+| `POST /api/payment/payhere/notify` | PayHere | Receive and verify PayHere payment notifications |
 | `GET /api/vendors` | Authenticated | List vendors |
 | `POST /api/vendors` | Admin | Create a vendor |
 | `PUT /api/vendors/:id` | Admin | Update a vendor |
@@ -286,6 +301,7 @@ npm run ensure:vendor --prefix backend
 - Deploy the backend as a Node.js service and set all backend environment variables in the hosting dashboard.
 - Set `CLIENT_URL` to the deployed frontend URL. For multiple frontend origins, use a comma-separated value.
 - Set `VITE_API_URL` to the deployed backend API URL, for example `https://your-api-domain.com/api`.
+- Set `PAYHERE_NOTIFY_URL` to a public backend URL. PayHere server notifications cannot be received on localhost.
 - Use MongoDB Atlas or another hosted MongoDB service for production.
 - Configure persistent file storage for production uploads. Local `backend/uploads` is suitable for development but can be temporary on many cloud hosts.
 - Use a strong `JWT_SECRET` and avoid committing `.env` files.

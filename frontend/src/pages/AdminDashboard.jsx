@@ -61,6 +61,21 @@ export default function AdminDashboard() {
 
   const booking = useMemo(() => bookings.find((item) => item._id === selectedBooking), [bookings, selectedBooking]);
   const pendingBookings = useMemo(() => bookings.filter((item) => item.status === 'pending' || item.status === 'vendor_assigned'), [bookings]);
+  const paidBookings = useMemo(() => bookings.filter((item) => item.paymentStatus === 'paid' || item.status === 'completed'), [bookings]);
+  const pendingPayments = useMemo(() => bookings.filter((item) => item.paymentStatus !== 'paid'), [bookings]);
+  const totalRevenue = useMemo(
+    () => paidBookings.reduce((sum, item) => sum + Number(item.estimatedTotal || 0), 0),
+    [paidBookings]
+  );
+  const monthlyRevenue = useMemo(() => {
+    const now = new Date();
+    return paidBookings
+      .filter((item) => {
+        const paidDate = item.paidAt ? new Date(item.paidAt) : new Date(item.updatedAt);
+        return paidDate.getMonth() === now.getMonth() && paidDate.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, item) => sum + Number(item.estimatedTotal || 0), 0);
+  }, [paidBookings]);
   const selectedVendorTotal = useMemo(
     () =>
       freeVendors
@@ -220,8 +235,8 @@ export default function AdminDashboard() {
         <div className="admin-stat-grid">
           <article><CalendarCheck /><strong>{bookings.length}</strong><span>Total Bookings</span><small>↑ 18% from last month</small></article>
           <article><Users /><strong>{vendors.length}</strong><span>Active Vendors</span><small>↑ 12% from last month</small></article>
-          <article><CheckCircle2 /><strong>{bookings.filter((item) => item.status === 'approved').length}</strong><span>Approved Requests</span><small>↑ 20% from last month</small></article>
-          <article><CalendarCheck /><strong>{bookings.filter((item) => item.status === 'completed').length}</strong><span>Completed Events</span><small>↑ 15% from last month</small></article>
+          <article><CheckCircle2 /><strong>{paidBookings.length}</strong><span>Paid Bookings</span><small>LKR {totalRevenue.toLocaleString()} revenue</small></article>
+          <article><CalendarCheck /><strong>{pendingPayments.length}</strong><span>Pending Payments</span><small>LKR {monthlyRevenue.toLocaleString()} this month</small></article>
         </div>
 
         <div className="admin-two-col">
@@ -267,12 +282,52 @@ export default function AdminDashboard() {
                     <td>{new Date(item.eventDate).toLocaleDateString()}<small>{item.startTime || '--:--'} - {item.endTime || '--:--'}</small></td>
                     <td>{item.venueAddress}</td>
                     <td><StatusBadge status={item.status} /></td>
-                    <td>{item.payments?.length ? item.payments.map((pay) => <a key={pay._id} href={`${uploadsBaseUrl}${pay.slipUrl}`} target="_blank">LKR {Number(pay.amount).toLocaleString()}</a>) : 'No slip'}</td>
+                    <td>
+                      <StatusBadge status={item.paymentStatus || 'pending'} />
+                      <small>{item.paymentGateway === 'payhere' ? `PayHere ${item.paymentId || item.paymentOrderId || ''}` : 'Manual slip'}</small>
+                      {item.payments?.length ? item.payments.map((pay) =>
+                        pay.slipUrl ? (
+                          <a key={pay._id} href={`${uploadsBaseUrl}${pay.slipUrl}`} target="_blank">LKR {Number(pay.amount).toLocaleString()}</a>
+                        ) : (
+                          <span key={pay._id}>LKR {Number(pay.amount).toLocaleString()}</span>
+                        )
+                      ) : null}
+                    </td>
                     <td className="admin-action-cell">
                       <button type="button"><Eye size={15} /> View</button>
                       <button onClick={() => updateStatus(item._id, 'approved')} disabled={item.status === 'approved'} type="button">Approve</button>
                       <button disabled={!item.payments?.length || item.status === 'completed'} onClick={() => verifyPayment(item._id)} type="button">Verify</button>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="admin-card" id="payments">
+          <div className="admin-card-title"><h2><CreditCard size={20} /> Payments</h2><button type="button">Export</button></div>
+          <div className="payment-summary-grid">
+            <article><span>Total Revenue</span><strong>LKR {totalRevenue.toLocaleString()}</strong></article>
+            <article><span>Monthly Revenue</span><strong>LKR {monthlyRevenue.toLocaleString()}</strong></article>
+            <article><span>Paid Bookings</span><strong>{paidBookings.length}</strong></article>
+            <article><span>Pending Payments</span><strong>{pendingPayments.length}</strong></article>
+          </div>
+          <div className="admin-table-wrap">
+            <table>
+              <thead>
+                <tr><th>Booking ID</th><th>Customer</th><th>Package</th><th>Amount</th><th>Gateway</th><th>Status</th><th>Paid At</th></tr>
+              </thead>
+              <tbody>
+                {bookings.map((item) => (
+                  <tr key={item._id}>
+                    <td>{item.paymentOrderId || item._id.slice(-8).toUpperCase()}</td>
+                    <td>{item.customer?.name}<small>{item.customer?.email}</small></td>
+                    <td>{item.eventService?.title}</td>
+                    <td>LKR {Number(item.estimatedTotal || 0).toLocaleString()}</td>
+                    <td>{item.paymentGateway === 'payhere' ? 'PayHere' : 'Manual Slip'}<small>{item.paymentId || item.paymentOrderId || 'Not verified'}</small></td>
+                    <td><StatusBadge status={item.paymentStatus || 'pending'} /></td>
+                    <td>{item.paidAt ? new Date(item.paidAt).toLocaleDateString() : 'Pending'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -401,7 +456,7 @@ export default function AdminDashboard() {
               ))}
             </div>
           </section>
-          <section className="admin-card"><div className="admin-card-title"><h2><CreditCard size={20} /> Revenue Overview</h2></div><strong className="admin-big-number">LKR {bookings.reduce((sum, item) => sum + Number(item.estimatedTotal || 0), 0).toLocaleString()}</strong><p className="muted">Up 12.5% from last month</p></section>
+          <section className="admin-card"><div className="admin-card-title"><h2><CreditCard size={20} /> Revenue Overview</h2></div><strong className="admin-big-number">LKR {totalRevenue.toLocaleString()}</strong><p className="muted">Monthly revenue: LKR {monthlyRevenue.toLocaleString()}</p></section>
           <section className="admin-card"><div className="admin-card-title"><h2><BarChart3 size={20} /> Booking Statistics</h2></div><div className="admin-donut"><strong>{bookings.length}</strong><span>Total</span></div></section>
           <section className="admin-card"><div className="admin-card-title"><h2><Bell size={20} /> Recent Activity</h2><button type="button">View All</button></div><ul className="admin-activity"><li>New booking request received</li><li>Booking approved by admin</li><li>Payment slip uploaded</li><li>Vendor application reviewed</li></ul></section>
         </div>

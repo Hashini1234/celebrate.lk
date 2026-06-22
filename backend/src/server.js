@@ -12,6 +12,7 @@ import feedbackRoutes from './routes/feedbackRoutes.js';
 import vendorRoutes from './routes/vendorRoutes.js';
 import vendorApplicationRoutes from './routes/vendorApplicationRoutes.js';
 import vendorPortalRoutes from './routes/vendorPortalRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +35,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
@@ -44,6 +46,7 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/vendor-applications', vendorApplicationRoutes);
 app.use('/api/vendor-portal', vendorPortalRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/payment', paymentRoutes);
 app.use('/api/feedback', feedbackRoutes);
 
 app.use((err, _req, res, _next) => {
