@@ -39,6 +39,15 @@ const steps = [
   ['Enjoy Your Event', 'We take care of the rest']
 ];
 
+const payHereMaxPaymentAmount = Number(import.meta.env.VITE_PAYHERE_MAX_PAYMENT_AMOUNT || 50000);
+
+function getPayHereOnlineAmount(eventItem, paymentType, paymentAmount) {
+  const total = Number(eventItem?.basePrice || 0);
+  const customAmount = Number(paymentAmount);
+  const preferredAmount = Number.isFinite(customAmount) && customAmount > 0 ? customAmount : paymentType === 'full' ? total : total / 2;
+  return payHereMaxPaymentAmount > 0 ? Math.min(preferredAmount, payHereMaxPaymentAmount) : preferredAmount;
+}
+
 function getBookingStep(booking) {
   if (!booking) return 0;
   if (booking.status === 'completed') return 3;
@@ -88,6 +97,7 @@ export default function CustomerDashboard() {
   const displayEvents = filteredEvents;
   const activeBooking = bookings[0];
   const activeStep = getBookingStep(activeBooking);
+  const onlinePaymentAmount = getPayHereOnlineAmount(selectedEvent, bookingForm.paymentType, bookingForm.paymentAmount);
 
   useEffect(() => {
     loadData();
@@ -141,7 +151,9 @@ export default function CustomerDashboard() {
       endTime: bookingForm.endTime,
       guestCount: bookingForm.guestCount,
       venueAddress: bookingForm.venueAddress,
-      notes: bookingForm.notes
+      notes: bookingForm.notes,
+      paymentType: bookingForm.paymentType,
+      paymentAmount: onlinePaymentAmount
     };
   }
 
@@ -381,8 +393,8 @@ export default function CustomerDashboard() {
               <strong>Rs. {Number(selectedEvent?.basePrice || 0).toLocaleString()}</strong>
             </div>
             <div className="booking-payment-box">
-              <h3>Upload Payment Slip</h3>
-              <p>Optional: upload half or full bank payment slip with this booking request.</p>
+              <h3>Payment Option</h3>
+              <p>Choose half or full payment for PayHere, or upload a bank payment slip with this booking request.</p>
               <div className="booking-payment-row">
                 <select value={bookingForm.paymentType} onChange={(e) => setBookingForm({ ...bookingForm, paymentType: e.target.value })}>
                   <option value="half">Half Payment</option>
@@ -390,12 +402,17 @@ export default function CustomerDashboard() {
                 </select>
                 <input
                   min="1"
-                  placeholder="Amount"
+                  max={selectedEvent?.basePrice || undefined}
+                  placeholder={`PayHere amount: Rs. ${Number(onlinePaymentAmount || 0).toLocaleString()}`}
                   type="number"
                   value={bookingForm.paymentAmount}
                   onChange={(e) => setBookingForm({ ...bookingForm, paymentAmount: e.target.value })}
                 />
               </div>
+              <small>
+                PayHere online charge: Rs. {Number(onlinePaymentAmount || 0).toLocaleString()}
+                {payHereMaxPaymentAmount > 0 ? ` (merchant limit Rs. ${payHereMaxPaymentAmount.toLocaleString()})` : ''}
+              </small>
               <label className="booking-slip-upload">
                 <CloudUpload size={24} />
                 <span>{bookingForm.slip ? bookingForm.slip.name : 'Choose payment slip photo'}</span>
@@ -411,7 +428,7 @@ export default function CustomerDashboard() {
               {submittingBooking ? 'Sending Request...' : 'Confirm Booking'} <ShieldCheck size={18} />
             </button>
             <button className="payhere-cta" disabled={startingPayment || submittingBooking} onClick={startPayHerePayment} type="button">
-              {startingPayment ? 'Starting PayHere...' : 'Pay Now with PayHere'} <CreditCard size={18} />
+              {startingPayment ? 'Starting PayHere...' : `Pay Rs. ${Number(onlinePaymentAmount || 0).toLocaleString()} with PayHere`} <CreditCard size={18} />
             </button>
           </form>
         </div>

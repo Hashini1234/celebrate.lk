@@ -12,16 +12,49 @@ function formatAmount(amount) {
   return Number(amount).toFixed(2);
 }
 
+function resolvePaymentAmount({ paymentAmount, paymentType, packageAmount }) {
+  const total = Number(packageAmount);
+  const requestedAmount = Number(paymentAmount);
+  const maxPaymentAmount = Number(process.env.PAYHERE_MAX_PAYMENT_AMOUNT || 50000);
+
+  if (Number.isFinite(requestedAmount) && requestedAmount > 0) {
+    if (requestedAmount > total) {
+      return { error: 'Payment amount cannot exceed the package total.' };
+    }
+
+    const amount = Math.min(requestedAmount, maxPaymentAmount);
+
+    return {
+      amount,
+      type: amount >= total ? 'full' : 'half',
+      label: amount >= total ? 'Full Payment' : amount >= total / 2 ? 'Half Payment' : 'Advance Payment'
+    };
+  }
+
+  const preferredAmount = paymentType === 'full' ? total : total / 2;
+  const amount = Math.min(preferredAmount, maxPaymentAmount);
+  return {
+    amount,
+    type: amount >= total ? 'full' : 'half',
+    label: amount >= total ? 'Full Payment' : amount >= total / 2 ? 'Half Payment' : 'Advance Payment'
+  };
+}
+
 function getPayHereConfig() {
+  const sandbox = process.env.PAYHERE_SANDBOX !== 'false';
   return {
     merchantId: process.env.PAYHERE_MERCHANT_ID,
     merchantSecret: process.env.PAYHERE_MERCHANT_SECRET,
     currency: process.env.PAYHERE_CURRENCY || 'LKR',
-    sandbox: process.env.PAYHERE_SANDBOX !== 'false',
+    sandbox,
     notifyUrl: process.env.PAYHERE_NOTIFY_URL,
     returnUrl: process.env.PAYHERE_RETURN_URL || process.env.CLIENT_URL,
     cancelUrl: process.env.PAYHERE_CANCEL_URL || process.env.CLIENT_URL
   };
+}
+
+function isLocalUrl(url = '') {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\b/i.test(url);
 }
 
 function createCheckoutHash({ merchantId, orderId, amount, currency, merchantSecret }) {
@@ -54,8 +87,13 @@ export async function createPayHerePayment(req, res) {
       message: 'PayHere is not configured. Add PAYHERE_MERCHANT_ID, PAYHERE_MERCHANT_SECRET and PAYHERE_NOTIFY_URL to backend/.env.'
     });
   }
+  if (!config.sandbox && isLocalUrl(config.notifyUrl)) {
+    return res.status(500).json({
+      message: 'PayHere live payments need a public HTTPS PAYHERE_NOTIFY_URL. Localhost callbacks cannot verify real payments.'
+    });
+  }
 
-  const { eventService, eventDate, startTime, endTime, guestCount, venueAddress, notes } = req.body;
+  const { eventService, eventDate, startTime, endTime, guestCount, venueAddress, notes, paymentAmount, paymentType } = req.body;
   const service = await EventService.findById(eventService);
   if (!service) return res.status(404).json({ message: 'Event service not found' });
   if (!eventDate || !startTime || !endTime || !guestCount || !venueAddress) {
@@ -63,7 +101,9 @@ export async function createPayHerePayment(req, res) {
   }
 
   const orderId = `CLK-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-  const amount = service.basePrice;
+  const resolvedPayment = resolvePaymentAmount({ paymentAmount, paymentType, packageAmount: service.basePrice });
+  if (resolvedPayment.error) return res.status(400).json({ message: resolvedPayment.error });
+  const amount = resolvedPayment.amount;
 
   const booking = await Booking.create({
     customer: req.user._id,
@@ -74,11 +114,11 @@ export async function createPayHerePayment(req, res) {
     guestCount,
     venueAddress,
     notes,
-    estimatedTotal: amount,
+    estimatedTotal: service.basePrice,
     paymentGateway: 'payhere',
     paymentStatus: 'pending',
     paymentOrderId: orderId,
-    adminMessage: 'Online payment started. Booking will be confirmed after PayHere verification.'
+    adminMessage: `${resolvedPayment.label} started through PayHere. Booking will be confirmed after PayHere verification.`
   });
 
   const { firstName, lastName } = splitName(req.user.name);
@@ -89,7 +129,7 @@ export async function createPayHerePayment(req, res) {
     cancel_url: config.cancelUrl,
     notify_url: config.notifyUrl,
     order_id: orderId,
-    items: service.title,
+    items: `${service.title} - ${resolvedPayment.label}`,
     amount: formatAmount(amount),
     currency: config.currency,
     hash: createCheckoutHash({
@@ -107,7 +147,7 @@ export async function createPayHerePayment(req, res) {
     city: 'Colombo',
     country: 'Sri Lanka',
     custom_1: booking._id.toString(),
-    custom_2: req.user._id.toString()
+    custom_2: resolvedPayment.type
   };
 
   res.status(201).json({
@@ -155,6 +195,8 @@ export async function handlePayHereNotification(req, res) {
   booking.paymentId = paymentId;
 
   if (statusCode === '2') {
+    const paidAmount = Number(payhereAmount);
+    const paymentType = paidAmount >= Number(booking.estimatedTotal) ? 'full' : 'half';
     booking.paymentStatus = 'paid';
     booking.status = 'completed';
     booking.paidAt = new Date();
@@ -163,8 +205,8 @@ export async function handlePayHereNotification(req, res) {
     const hasGatewayPayment = booking.payments.some((payment) => payment.note === `PayHere Order ${orderId}`);
     if (!hasGatewayPayment) {
       booking.payments.push({
-        amount: Number(payhereAmount),
-        type: 'full',
+        amount: paidAmount,
+        type: paymentType,
         note: `PayHere Order ${orderId}`,
         status: 'verified'
       });
